@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://c4yvuqjq5f6jh"]
+
+[ext_resource type="Script" path="res://scenes/ui/AppWindow.gd" id="1_1"]
+
+[node name="AppWindow" type="PanelContainer" unique_id=1698270305]
+offset_right = 640.0
+offset_bottom = 480.0
+script = ExtResource("1_1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=421756973]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="TitleBar" type="HBoxContainer" parent="VBoxContainer" unique_id=467228731]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+mouse_filter = 0
+theme_override_constants/separation = 8
+
+[node name="LeftSpacer" type="Control" parent="VBoxContainer/TitleBar" unique_id=438023796]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/TitleBar" unique_id=1304024941]
+unique_name_in_owner = true
+layout_mode = 2
+text = "app"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RightSpacer" type="Control" parent="VBoxContainer/TitleBar" unique_id=271833231]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="WindowButtons" type="HBoxContainer" parent="VBoxContainer/TitleBar" unique_id=947968349]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="MinimiseButton" type="Button" parent="VBoxContainer/TitleBar/WindowButtons" unique_id=906309680]
+unique_name_in_owner = true
+modulate = Color(1, 0.8, 0, 1)
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+tooltip_text = "Minimize"
+text = "•"
+flat = true
+
+[node name="MaximiseButton" type="Button" parent="VBoxContainer/TitleBar/WindowButtons" unique_id=2015786164]
+unique_name_in_owner = true
+modulate = Color(0, 1, 0, 1)
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+tooltip_text = "Maximize"
+text = "•"
+flat = true
+
+[node name="CloseButton" type="Button" parent="VBoxContainer/TitleBar/WindowButtons" unique_id=2054497370]
+unique_name_in_owner = true
+modulate = Color(1, 0, 0, 1)
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+tooltip_text = "Close"
+text = "•"
+flat = true
+
+[node name="AppContainer" type="MarginContainer" parent="VBoxContainer" unique_id=250999501]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="ResizeHandleContainer" type="Control" parent="." unique_id=1563636671]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ResizeHandle" type="Control" parent="ResizeHandleContainer" unique_id=1102854189]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_default_cursor_shape = 2

@@ -1,0 +1,190 @@
+[gd_scene format=3 uid="uid://yrp2n8clewrv"]
+
+[ext_resource type="Script" path="res://scenes/desktop/Desktop.gd" id="1_desktop"]
+[ext_resource type="PackedScene" uid="uid://dxm6sddvkn2r3" path="res://scenes/ui/ObjectivesBoard.tscn" id="2_objectives"]
+[ext_resource type="Script" path="res://scenes/desktop/NudgeSystem.gd" id="3_nudgesystem"]
+[ext_resource type="Texture2D" uid="uid://cmwnekvuo22sp" path="res://assets/generated/icon_terminal_frame_0.png" id="4_icon_terminal"]
+[ext_resource type="Texture2D" uid="uid://k1ydhnqxkqcb" path="res://assets/generated/icon_cipherlink_frame_0.png" id="5_icon_cipherlink"]
+[ext_resource type="Texture2D" uid="uid://b7nwcht7nvthk" path="res://assets/generated/icon_files_frame_0.png" id="6_icon_files"]
+[ext_resource type="Texture2D" uid="uid://dbk8hhg5ou8vd" path="res://assets/generated/icon_notepad_frame_0.png" id="7_icon_notepad"]
+
+[node name="Desktop" type="Control" unique_id=230041598]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_desktop")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1111173832]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0509804, 0.0509804, 0.0509804, 1)
+
+[node name="DesktopIcons" type="Control" parent="." unique_id=299231347]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 48.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TerminalIcon" type="VBoxContainer" parent="DesktopIcons" unique_id=1945056142]
+custom_minimum_size = Vector2(64, 80)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 80.0
+offset_bottom = 96.0
+mouse_filter = 1
+theme_override_constants/separation = 4
+
+[node name="IconTexture" type="TextureRect" parent="DesktopIcons/TerminalIcon" unique_id=468903881]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("4_icon_terminal")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="DesktopIcons/TerminalIcon" unique_id=140189492]
+layout_mode = 2
+text = "Terminal"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CipherLinkIcon" type="VBoxContainer" parent="DesktopIcons" unique_id=23540870]
+custom_minimum_size = Vector2(64, 80)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 108.0
+offset_right = 80.0
+offset_bottom = 188.0
+mouse_filter = 1
+theme_override_constants/separation = 4
+
+[node name="IconTexture" type="TextureRect" parent="DesktopIcons/CipherLinkIcon" unique_id=102182571]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("5_icon_cipherlink")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="DesktopIcons/CipherLinkIcon" unique_id=774280104]
+layout_mode = 2
+text = "CipherLink"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="FilesIcon" type="VBoxContainer" parent="DesktopIcons" unique_id=1808552126]
+custom_minimum_size = Vector2(64, 80)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 200.0
+offset_right = 80.0
+offset_bottom = 280.0
+mouse_filter = 1
+theme_override_constants/separation = 4
+
+[node name="IconTexture" type="TextureRect" parent="DesktopIcons/FilesIcon" unique_id=1106347064]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("6_icon_files")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="DesktopIcons/FilesIcon" unique_id=1258915611]
+layout_mode = 2
+text = "Files"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="NotepadIcon" type="VBoxContainer" parent="DesktopIcons" unique_id=95023544]
+custom_minimum_size = Vector2(64, 80)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 292.0
+offset_right = 80.0
+offset_bottom = 372.0
+mouse_filter = 1
+theme_override_constants/separation = 4
+
+[node name="IconTexture" type="TextureRect" parent="DesktopIcons/NotepadIcon" unique_id=598900184]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("7_icon_notepad")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="DesktopIcons/NotepadIcon" unique_id=544872317]
+layout_mode = 2
+text = "Notepad"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="WindowLayer" type="Control" parent="." unique_id=521082942]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ObjectivesBoard" parent="." unique_id=2016839708 instance=ExtResource("2_objectives")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -266.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 166.0
+grow_horizontal = 0
+
+[node name="Taskbar" type="PanelContainer" parent="." unique_id=4758275]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 32.0
+grow_horizontal = 2
+
+[node name="TaskbarBg" type="ColorRect" parent="Taskbar" unique_id=970186301]
+layout_mode = 2
+color = Color(0.15, 0.15, 0.15, 0.95)
+
+[node name="MarginContainer" type="MarginContainer" parent="Taskbar" unique_id=2063067145]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Taskbar/MarginContainer" unique_id=9423876]
+layout_mode = 2
+
+[node name="TaskbarButtons" type="HBoxContainer" parent="Taskbar/MarginContainer/HBoxContainer" unique_id=327281153]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Clock" type="Label" parent="Taskbar/MarginContainer/HBoxContainer" unique_id=8472651]
+unique_name_in_owner = true
+layout_mode = 2
+text = "00:00"
+vertical_alignment = 1
+
+[node name="NudgeSystem" type="Node" parent="." unique_id=1479999538]
+script = ExtResource("3_nudgesystem")
+
+[node name="RightClickMenu" type="PopupMenu" parent="." unique_id=1597458214]
