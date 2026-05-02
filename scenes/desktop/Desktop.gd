@@ -211,10 +211,20 @@ func _on_stage_advanced(new_stage: int) -> void:
 	_objectives_board.refresh()
 
 
+func _get_app_content(app_name: String) -> Node:
+	var window: Node = _open_windows.get(app_name, null)
+	if window == null:
+		return null
+	var app_container: Node = window.get_node_or_null("VBoxContainer/AppContainer")
+	if app_container == null:
+		return null
+	if app_container.get_child_count() == 0:
+		return null
+	return app_container.get_child(0)
+
+
 func _get_cipherlink() -> Node:
-	if "cipherlink" in _open_windows:
-		return _open_windows["cipherlink"]
-	return null
+	return _get_app_content("cipherlink")
 
 
 func _on_brief_delivered() -> void:
@@ -234,7 +244,7 @@ func _on_world_event(event_name: String) -> void:
 			ScriptManager.queue_message({
 				"from": "cipher",
 				"body": "ghost. calloway's machine just woke up.\nthey're in the archive.\n\nthey know someone's there.",
-				"delay": 2.0
+				"delay": 5.0
 			})
 			GameState.calloway_aware = true
 		
@@ -247,8 +257,8 @@ func _on_world_event(event_name: String) -> void:
 		
 		"wipe_in_progress":
 			# Calloway's mid-wipe message arrives on the terminal
-			var terminal: Node = _open_windows.get("terminal", null)
-			if terminal:
+			var terminal: Node = _get_app_content("terminal")
+			if terminal and terminal.has_method("receive_calloway_broadcast"):
 				terminal.receive_calloway_broadcast()
 			GameState.wipe_complete = false
 		

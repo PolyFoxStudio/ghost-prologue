@@ -22,7 +22,7 @@ func queue_message(msg: Dictionary) -> void:
 func _send_message(msg: Dictionary) -> void:
 	# Check trigger condition if present
 	if msg.has("trigger"):
-		if not _evaluate_trigger(msg["trigger"]):
+		if _evaluate_trigger(msg["trigger"]):
 			return
 	
 	# Set any flags specified in the message

@@ -404,9 +404,13 @@ func on_file_read(path: String) -> void:
 
 
 func on_directory_entered(path: String) -> void:
+	if path.contains("calloway_jb") and not GameState.calloway_aware:
+		GameState.calloway_aware = true
+		GameState.advance_stage(4)
+		ScriptManager.fire_event("calloway_aware")
+	
 	if "calloway_jb" in path and not GameState.archive_located:
 		GameState.archive_located = true
-		GameState.advance_stage(4)
 		ScriptManager.fire_event("archive_found")
 
 

@@ -17,13 +17,13 @@ func _ready() -> void:
 	ScriptManager.message_queued.connect(_on_message_received)
 	_input.focus_mode = Control.FOCUS_CLICK
 	
-	if not GameState.brief_delivered:
-		_on_first_open()
-	
 	# Check for any pending messages that arrived while CipherLink was closed
 	var history: Array[Dictionary] = ScriptManager.get_message_history()
 	for msg in history:
 		_deliver_message(msg, true)
+	
+	if not GameState.brief_delivered:
+		_on_first_open()
 	
 	# Grab focus on the input field after everything is set up
 	_input.call_deferred("grab_focus")

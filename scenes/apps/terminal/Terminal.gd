@@ -5,7 +5,7 @@ signal command_finished
 
 const PROMPT_LOCAL := "ghost@local:~$"
 const PROMPT_REMOTE := "jcalloway@vd-internal:~$"
-const TRANSFER_DURATION := 480.0
+const TRANSFER_DURATION := 160.0
 
 var _vfs: VirtualFileSystem
 var _current_prompt: String = PROMPT_LOCAL
@@ -18,6 +18,7 @@ var _calloway_buffer: String = ""
 var _calloway_exchange_count: int = 0
 var _transfer_halfway_sent: bool = false
 var _is_command_running: bool = false
+var _skip_next_input_line: bool = false
 
 # Inline input variables
 var _current_input: String = ""
@@ -110,6 +111,20 @@ func _on_cursor_blink() -> void:
 
 
 func _show_input_line(prompt_override: String = "") -> void:
+	if GameState.transfer_running:
+		# Don't add input line to output during transfer
+		# Just update _current_input_line in place
+		if _current_input_line == null:
+			_current_input_line = RichTextLabel.new()
+			_current_input_line.bbcode_enabled = true
+			_current_input_line.fit_content = true
+			_current_input_line.scroll_active = false
+			_output.add_child(_current_input_line)
+		_current_input = ""
+		_cursor_visible = true
+		_update_input_line()
+		return
+	
 	# Don't remove the old input line - keep it in history!
 	# Just finalize it (remove cursor) if it exists
 	if _current_input_line != null:
@@ -162,6 +177,14 @@ func _submit_command() -> void:
 		_show_input_line()
 		return
 	
+	if GameState.transfer_running:
+		# Allow these commands through during transfer
+		var allowed_during_transfer: Array[String] = ["clear"]
+		if command.split(" ", false)[0] not in allowed_during_transfer:
+			_print_line("rsync in progress — command queued until transfer completes.", "secondary")
+			emit_signal("command_finished")
+			return
+	
 	_history.push_front(command)
 	_history_index = -1
 	_is_command_running = true
@@ -170,7 +193,9 @@ func _submit_command() -> void:
 	await command_finished
 	_is_command_running = false
 	GameState.record_activity()
-	_show_input_line(prompt_before_command)
+	if not _skip_next_input_line:
+		_show_input_line(prompt_before_command)
+	_skip_next_input_line = false
 	
 	await get_tree().process_frame
 	_scroll_to_bottom()
@@ -488,10 +513,6 @@ func _cmd_ssh(args: Array[String]) -> void:
 	_vfs.set_remote_session(true)
 	_current_prompt = PROMPT_REMOTE
 	_update_prompt()
-	GameState.advance_stage(4)
-	# Delay calloway_aware message by 5 seconds
-	await get_tree().create_timer(5.0).timeout
-	ScriptManager.fire_event("calloway_aware")
 	call_deferred("emit_signal", "command_finished")
 
 
@@ -584,6 +605,8 @@ func _run_transfer() -> void:
 		"body": "got it. everything's on staging.\nhash matches — clean transfer.",
 		"delay": 2.0
 	})
+	
+	_show_input_line()
 
 
 func _update_progress_line(pct: int) -> void:
@@ -610,7 +633,7 @@ func _cmd_shred(args: Array[String]) -> void:
 			"body": "transfer's still running. wipe after we've confirmed\nthe staging copy.",
 			"delay": 1.0
 		})
-		call_deferred("emit_signal", "command_finished")
+		emit_signal("command_finished")
 		return
 	
 	if not _remote_session:
@@ -933,9 +956,30 @@ func _scroll_to_bottom() -> void:
 
 
 func _clear_output() -> void:
+	# Remove ALL children including the current input line
 	for child in _output.get_children():
 		child.queue_free()
-	call_deferred("emit_signal", "command_finished")
+	
+	# Reset the input line reference — it's been freed
+	_current_input_line = null
+	
+	# If transfer is running, re-add progress bar
+	if GameState.transfer_running:
+		var pct: int = int(GameState.transfer_progress * 100)
+		_update_progress_line(pct)
+	
+	# Create a fresh input line
+	_show_input_line()
+	
+	# Do NOT emit command_finished here — _show_input_line handles 
+	# the next input, and _submit_command should not create another 
+	# input line after clear returns.
+	# Instead emit command_finished to satisfy the await:
+	_skip_next_input_line = true
+	emit_signal("command_finished")
+	
+	await get_tree().process_frame
+	_scroll_to_bottom()
 
 
 func _update_prompt() -> void:
