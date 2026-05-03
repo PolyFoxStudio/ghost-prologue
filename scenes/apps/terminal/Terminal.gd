@@ -380,41 +380,62 @@ func _cmd_cd(args: Array[String]) -> void:
 func _cmd_tar(args: Array[String]) -> void:
 	var has_extract: bool = false
 	var archive_file: String = ""
-	var verbose: bool = false
 	
-	for arg in args:
+	var i: int = 0
+	while i < args.size():
+		var arg: String = args[i]
 		if arg.begins_with("-"):
 			if "x" in arg:
 				has_extract = true
-			if "v" in arg:
-				verbose = true
-		elif arg.ends_with(".tar.gz"):
+			if "C" in arg:
+				# Skip the next argument (the directory)
+				if i + 1 < args.size() and not args[i+1].begins_with("-"):
+					i += 1
+		elif "brief_calloway_vd" in arg:
 			archive_file = arg
+		elif arg.ends_with(".tar.gz") or arg.ends_with(".tgz"):
+			# Fallback for any other tarball if we want, 
+			# but the prompt emphasizes brief_calloway_vd
+			if archive_file == "":
+				archive_file = arg
+		i += 1
 	
 	if not has_extract or archive_file.is_empty():
 		_print_line("tar: missing archive operand", "error")
 		call_deferred("emit_signal", "command_finished")
 		return
 	
-	if not _vfs.file_exists("~/downloads/brief_calloway_vd.tar.gz"):
+	# Validate existence and state
+	var file_exists: bool = _vfs.file_exists(archive_file)
+	var is_correct_file: bool = "brief_calloway_vd" in archive_file
+	
+	if not is_correct_file or not GameState.brief_delivered or not file_exists:
 		_print_line("tar: " + archive_file + ": Cannot open: No such file or directory", "error")
 		call_deferred("emit_signal", "command_finished")
 		return
 	
 	if _vfs._brief_extracted:
+		# If already extracted, the archive is "gone" (replaced by folder)
 		_print_line("tar: " + archive_file + ": Cannot open: No such file or directory", "error")
 		call_deferred("emit_signal", "command_finished")
 		return
 	
-	if verbose:
-		_print_line("calloway_jordan_profile.txt")
-		_print_line("vantage_dynamics_network.txt")
-		_print_line("target_archive_map.txt")
-		_print_line("objectives.txt")
-		_print_line("calloway_jbc.pem")
-	
 	await get_tree().create_timer(0.8).timeout
 	_vfs.populate_brief()
+	
+	var is_verbose: bool = false
+	for arg in args:
+		if "v" in arg:
+			is_verbose = true
+			break
+	
+	if is_verbose:
+		_print_line("calloway_jordan_profile.txt", "secondary")
+		_print_line("vantage_dynamics_network.txt", "secondary")
+		_print_line("target_archive_map.txt", "secondary")
+		_print_line("objectives.txt", "secondary")
+		_print_line("calloway_jbc.pem", "secondary")
+	
 	GameState.advance_stage(2)
 	call_deferred("emit_signal", "command_finished")
 
