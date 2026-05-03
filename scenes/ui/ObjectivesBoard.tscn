@@ -1,21 +1,21 @@
-[gd_scene load_steps=2 format=3 uid="uid://dxm6sddvkn2r3"]
+[gd_scene format=3 uid="uid://dxm6sddvkn2r3"]
 
 [ext_resource type="Script" path="res://scenes/ui/ObjectivesBoard.gd" id="1_w5f0h"]
 
-[node name="ObjectivesBoard" type="PanelContainer"]
+[node name="ObjectivesBoard" type="PanelContainer" unique_id=637067125]
 offset_right = 250.0
 offset_bottom = 150.0
 script = ExtResource("1_w5f0h")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=891567981]
 layout_mode = 2
 
-[node name="Header" type="Label" parent="VBoxContainer"]
+[node name="Header" type="Label" parent="VBoxContainer" unique_id=1945442367]
 layout_mode = 2
 text = "OBJECTIVES"
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer" unique_id=980210802]
 layout_mode = 2
 
-[node name="ObjectiveList" type="VBoxContainer" parent="VBoxContainer"]
+[node name="ObjectiveList" type="VBoxContainer" parent="VBoxContainer" unique_id=1524869989]
 layout_mode = 2

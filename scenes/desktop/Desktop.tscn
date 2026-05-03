@@ -145,9 +145,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -266.0
-offset_top = 16.0
+offset_top = 48.0
 offset_right = -16.0
-offset_bottom = 166.0
+offset_bottom = 198.0
 grow_horizontal = 0
 
 [node name="Taskbar" type="PanelContainer" parent="." unique_id=4758275]
