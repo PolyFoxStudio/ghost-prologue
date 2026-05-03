@@ -31,6 +31,10 @@ func _send_message(msg: Dictionary) -> void:
 			var flag_value: bool = msg["flags_set"][flag_name]
 			GameState.set_flag(flag_name, flag_value)
 	
+	# Ensure timestamp is set (defaults to current time if not provided)
+	if not msg.has("timestamp"):
+		msg["timestamp"] = Time.get_time_string_from_system().substr(0, 5)
+	
 	# Store message in history if it's for CipherLink
 	if msg.get("from", "") in ["cipher", "ghost", "system"]:
 		_message_history.append(msg)

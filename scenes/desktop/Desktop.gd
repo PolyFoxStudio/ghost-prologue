@@ -266,29 +266,79 @@ func _on_world_event(event_name: String) -> void:
 			GameState.alarm_fired = true
 			ScriptManager.queue_message({
 				"from": "cipher",
-				"body": "ghost.\n\nphysical security at calloway's building just got\nan alert. I'm watching their external dispatch system.\n\nthat's faster than it should be. I ran the timing\nagainst their security contract. the response team\nshouldn't have been notified for another six minutes\nminimum.\n\nI don't know what this is.\nthis wasn't in the brief.",
+				"body": "ghost.",
 				"delay": 1.0
 			})
+			
 			ScriptManager.queue_message({
 				"from": "cipher",
-				"body": "teams are moving. calloway's floor.\n\nghost — what do you want to do?",
-				"delay": 5.0
+				"body": "physical security at calloway's building\njust got an alert.\nI'm watching their external dispatch system.",
+				"delay": 4.0
 			})
-			# Show response options after 6 seconds
-			await get_tree().create_timer(6.0).timeout
-			var cl: Node = _get_cipherlink()
-			if cl:
-				cl.show_response_options([
-					"can you warn them?",
-					"not our job.",
-				])
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "that's faster than it should be.",
+				"delay": 9.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "I ran the timing against their security contract.\nthe response team shouldn't have been notified\nfor another six minutes minimum.",
+				"delay": 13.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "I don't know what this is.\nthis wasn't in the brief.",
+				"delay": 19.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "teams are moving. calloway's floor.",
+				"delay": 24.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "ghost — what do you want to do?",
+				"delay": 28.0
+			})
+			
+			_begin_alarm_options()
 		
 		"calloway_dead":
 			ScriptManager.queue_message({
 				"from": "cipher",
-				"body": "ghost.\n\ncalloway is dead.\n\nthe report's being filed as accidental.\nthey're calling it a fall.\n\nI've seen these reports before.\nthis one is not that.\n\nthis is not what we were hired to do.",
+				"body": "ghost.",
 				"delay": 1.0
 			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "calloway is dead.",
+				"delay": 4.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "the report's being filed as accidental.\nthey're calling it a fall.",
+				"delay": 8.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "I've seen these reports before.\nthis one is not that.",
+				"delay": 13.0
+			})
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "this is not what we were hired to do.",
+				"delay": 17.0
+			})
+			
 			ScriptManager.queue_message({
 				"from": "cipher",
 				"body": "talk to me.\n\nI need to know what you're thinking.",
@@ -314,6 +364,16 @@ func _on_world_event(event_name: String) -> void:
 				_handle_ghost_ending_response(message)
 			else:
 				print("World event: " + event_name)
+
+
+func _begin_alarm_options() -> void:
+	await get_tree().create_timer(30.0).timeout
+	var cl: Node = _get_cipherlink()
+	if cl:
+		cl.show_response_options([
+			"can you warn them?",
+			"not our job.",
+		])
 
 
 func _input(event: InputEvent) -> void:
@@ -386,41 +446,78 @@ func _handle_ghost_ending_response(message: String) -> void:
 	match message:
 		"we didn't know.":
 			ScriptManager.queue_message({
-				"from": "cipher",
-				"body": "yeah.\n\nwe didn't.\n\nI'm going to need to sit with that for a while.",
-				"delay": 4.0
+				"from": "cipher", "body": "yeah.", "delay": 3.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher", "body": "we didn't.", "delay": 6.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher", 
+				"body": "I'm going to need to sit with that\nfor a while.",
+				"delay": 9.0
 			})
 			GameState.set_flag("ghost_rationalized", true)
 		
 		"we were used.":
 			ScriptManager.queue_message({
+				"from": "cipher", "body": "yes. we were.", "delay": 3.0
+			})
+			ScriptManager.queue_message({
 				"from": "cipher",
-				"body": "yes. we were.\n\nI checked that routing twice.\nit came back cold both times.\n\nwhoever built this operation knew we'd check it.\ndesigned it to come back clean.\n\nwe were supposed to be standing\nexactly where we stood.",
-				"delay": 4.0
+				"body": "I checked that routing twice.\nit came back cold both times.",
+				"delay": 7.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "whoever built this operation knew we'd check it.\ndesigned it to come back clean.",
+				"delay": 12.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "we were supposed to be standing\nexactly where we stood.",
+				"delay": 17.0
 			})
 			GameState.set_flag("ghost_named_it", true)
 		
 		"I read the archive.":
 			ScriptManager.queue_message({
-				"from": "cipher",
-				"body": "...\n\nwhat was in it?",
-				"delay": 4.0
+				"from": "cipher", "body": "...", "delay": 3.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher", "body": "what was in it?", "delay": 7.0
 			})
 			GameState.set_flag("cipher_knows_truth", true)
 		
 		"the response time was wrong.":
 			ScriptManager.queue_message({
+				"from": "cipher", "body": "I know.", "delay": 3.0
+			})
+			ScriptManager.queue_message({
 				"from": "cipher",
-				"body": "I know.\n\nI've been trying to figure out how they got\nthere that fast. the math doesn't work for\na standard response contract.\n\npre-staged. had to be.\n\nwhich means someone wanted them dead.\nnot just the files gone.",
-				"delay": 4.0
+				"body": "I've been trying to figure out how they got\nthere that fast.",
+				"delay": 6.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "the math doesn't work for a standard\nresponse contract.",
+				"delay": 11.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher", "body": "pre-staged. had to be.", "delay": 15.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "which means someone wanted them dead.\nnot just the files gone.",
+				"delay": 19.0
 			})
 			GameState.set_flag("ghost_flagged_timing", true)
 		
 		"I need to find out who the client is.":
 			ScriptManager.queue_message({
-				"from": "cipher",
-				"body": "yeah.\n\nyeah, I think so too.",
-				"delay": 4.0
+				"from": "cipher", "body": "yeah.", "delay": 3.0
+			})
+			ScriptManager.queue_message({
+				"from": "cipher", "body": "yeah, I think so too.", "delay": 6.0
 			})
 			GameState.set_flag("client_investigation_flagged", true)
 
