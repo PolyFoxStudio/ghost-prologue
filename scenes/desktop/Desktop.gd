@@ -7,7 +7,7 @@ extends Control
 const TERMINAL_SCENE: PackedScene = preload("res://scenes/apps/terminal/Terminal.tscn")
 const CIPHERLINK_SCENE: PackedScene = preload("res://scenes/apps/cipherlink/CipherLink.tscn")
 const FILES_SCENE: PackedScene = preload("res://scenes/apps/files/FileBrowser.tscn")
-# const NOTEPAD_SCENE = preload("res://scenes/apps/notepad/Notepad.tscn")
+const NOTEPAD_SCENE: PackedScene = preload("res://scenes/apps/notepad/Notepad.tscn")
 
 const APP_WINDOW_SCENE: PackedScene = preload("res://scenes/ui/AppWindow.tscn")
 const TOAST_SCENE: PackedScene = preload("res://scenes/ui/ToastNotification.tscn")
@@ -67,6 +67,39 @@ func _update_clock() -> void:
 
 
 func open_app(app_name: String) -> void:
+	# Special handling for notepad — allow multiple instances
+	if app_name == "notepad":
+		if NOTEPAD_SCENE:
+			var app_content: Control = NOTEPAD_SCENE.instantiate()
+			var window: PanelContainer = APP_WINDOW_SCENE.instantiate()
+			window.title = "notepad"
+			window.size = Vector2(640, 480)
+			
+			# Add app content to window
+			var app_container: MarginContainer = window.get_node("VBoxContainer/AppContainer")
+			app_container.add_child(app_content)
+			
+			# Add window to layer
+			_window_layer.add_child(window)
+			
+			# Position window
+			_position_new_window(window)
+			
+			# Use unique key for multiple notepad instances
+			var key: String = "notepad_" + str(Time.get_ticks_msec())
+			_open_windows[key] = window
+			
+			# Connect closed signal with unique key
+			window.closed.connect(_on_window_closed.bind(key))
+			window.minimized.connect(_on_window_minimized.bind(key))
+			
+			# Create taskbar button
+			_create_taskbar_button(key, "notepad", window)
+			
+			# Focus the window
+			window.call_deferred("grab_focus")
+		return
+	
 	# If window already open, bring to front
 	if app_name in _open_windows:
 		var window: Control = _open_windows[app_name]
@@ -92,9 +125,6 @@ func open_app(app_name: String) -> void:
 			if FILES_SCENE:
 				app_content = FILES_SCENE.instantiate()
 				window_title = "Files"
-		"notepad":
-			print("open_app: notepad — not yet implemented")
-			return
 	
 	if not app_content:
 		return

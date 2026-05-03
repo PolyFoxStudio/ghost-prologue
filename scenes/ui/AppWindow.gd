@@ -44,6 +44,20 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	
+	# Set opaque background
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color("#1a1a1a")  # Dark background
+	panel_style.border_width_left = 1
+	panel_style.border_width_top = 1
+	panel_style.border_width_right = 1
+	panel_style.border_width_bottom = 1
+	panel_style.border_color = Color("#4a4a4a")  # Gray border
+	panel_style.corner_radius_top_left = 4
+	panel_style.corner_radius_top_right = 4
+	panel_style.corner_radius_bottom_left = 4
+	panel_style.corner_radius_bottom_right = 4
+	add_theme_stylebox_override("panel", panel_style)
+	
 	if _close_button:
 		_close_button.pressed.connect(_on_close)
 		_close_button.mouse_entered.connect(_on_close_hover)
