@@ -35,6 +35,56 @@ const DOUBLE_CLICK_TIME: float = 0.4  # 400ms for double-click
 var _last_click_time: Dictionary = {}  # Track last click time per icon
 var _last_click_pos: Dictionary = {}   # Track last click position per icon
 
+var _epilogue_sequence = [
+	{
+		"body": "I'm here when you're ready.",
+		"already_sent": true,  # already sent above
+		"fade_out_duration": 3.0,
+		"darkness_hold": 2.0,
+		"fade_in_duration": 2.0,
+		"light_hold": 4.0,
+	},
+	{
+		"body": "checking in.",
+		"delay_after_fade_in": 2.0,
+		"fade_out_duration": 4.0,
+		"darkness_hold": 3.0,
+		"fade_in_duration": 2.0,
+		"light_hold": 3.0,
+	},
+	{
+		"body": "found something in the client routing.\nnot sure what it means yet.\nwant to look at it together?",
+		"delay_after_fade_in": 2.0,
+		"fade_out_duration": 5.0,
+		"darkness_hold": 4.0,
+		"fade_in_duration": 2.0,
+		"light_hold": 3.0,
+	},
+	{
+		"body": "I hope you're alright.",
+		"delay_after_fade_in": 2.0,
+		"fade_out_duration": 6.0,
+		"darkness_hold": 5.0,
+		"fade_in_duration": 2.0,
+		"light_hold": 3.0,
+	},
+	{
+		"body": "still here.",
+		"delay_after_fade_in": 2.0,
+		"fade_out_duration": 7.0,
+		"darkness_hold": 6.0,
+		"fade_in_duration": 2.0,
+		"light_hold": 4.0,
+	},
+	{
+		"body": "wherever you went, I hope it's somewhere quiet.\ntake care of yourself.\n— c",
+		"delay_after_fade_in": 3.0,
+		"fade_out_duration": 8.0,
+		"darkness_hold": 0.0,  # doesn't come back
+		"is_final": true,
+	},
+]
+
 
 func _ready() -> void:
 	# Connect global signals
@@ -324,23 +374,14 @@ func _on_world_event(event_name: String) -> void:
 				{"from": "cipher", "body": "this is not what we were hired to do."},
 			])
 			
-			ScriptManager.queue_message({
-				"from": "cipher",
-				"body": "talk to me.\n\nI need to know what you're thinking.",
-				"delay": 180.0
-			})
-			_begin_ending_beat()
+			_begin_death_response()
 		
 		"epilogue_begin":
-			var cl: Node = _get_cipherlink()
-			if cl:
-				cl.activate_send_failed_mode()
-			
-			# Start epilogue message sequence
-			_run_epilogue()
+			_begin_fading_epilogue()
 		
 		"ending_beat_complete":
-			_trigger_epilogue()
+			# This event is no longer used by the new response flow but kept for compatibility
+			pass
 		
 		_:
 			# Check for ghost_sent_message events in ending beat
@@ -404,9 +445,30 @@ func _begin_opening_sequence() -> void:
 	
 	# Brief arrives roughly when the last message does
 	# queue_sequence delivers ~7 messages at ~3s each = ~21s total
+	_begin_opening_response()
 	await get_tree().create_timer(25.0).timeout
 	ScriptManager.fire_event("brief_delivered")
 	GameState.advance_stage(1)
+
+
+func _begin_opening_response() -> void:
+	await get_tree().create_timer(30.0).timeout
+	var cl = _get_app_content("cipherlink")
+	if cl:
+		cl.show_response_options([
+			"understood.",
+			"I'll take it from here.",
+		])
+
+
+func _begin_death_response() -> void:
+	# Wait for death messages to finish arriving (~20 seconds)
+	await get_tree().create_timer(22.0).timeout
+	var cl = _get_app_content("cipherlink")
+	if cl:
+		cl.show_response_options([
+			"no. it wasn't.",
+		])
 
 
 func _input(event: InputEvent) -> void:
@@ -469,104 +531,232 @@ func set_notification(app_name: String, active: bool) -> void:
 
 
 func _begin_ending_beat() -> void:
-	await get_tree().create_timer(182.0).timeout
-	var cl: Node = _get_cipherlink()
-	if cl and cl.has_method("show_ending_beat_options"):
-		cl.show_ending_beat_options()
+	await get_tree().create_timer(10.0).timeout
+	
+	ScriptManager.queue_sequence([
+		{"from": "cipher", "body": "talk to me."},
+		{"from": "cipher", "body": "I need to know what you're thinking."},
+	])
+	
+	await get_tree().create_timer(15.0).timeout
+	var cl = _get_app_content("cipherlink")
+	if cl:
+		cl.show_response_options([
+			"we were used.",
+			"I don't know what we just did.",
+			"calloway knew we were coming.",
+		])
+
+
+func _begin_ending_beat_exchange_2() -> void:
+	var cl = _get_app_content("cipherlink")
+	if cl:
+		cl.show_response_options([
+			"I don't know.",
+		])
 
 
 func _handle_ghost_ending_response(message: String) -> void:
 	match message:
-		"we didn't know.":
-			ScriptManager.queue_sequence([
-				{"from": "cipher", "body": "yeah."},
-				{"from": "cipher", "body": "we didn't."},
-				{"from": "cipher", "body": "I'm going to need to sit with that\nfor a while."},
-			])
-			GameState.set_flag("ghost_rationalized", true)
+		"understood.":
+			GameState.set_flag("ghost_acknowledged_brief", true)
 		
+		"I'll take it from here.":
+			GameState.set_flag("ghost_acknowledged_brief", true)
+			
+		"no. it wasn't.":
+			await get_tree().create_timer(3.0).timeout
+			_begin_ending_beat()
+			
 		"we were used.":
+			GameState.set_flag("ghost_named_it", true)
 			ScriptManager.queue_sequence([
 				{"from": "cipher", "body": "yes. we were."},
-				{"from": "cipher", "body": "I checked that routing twice.\nit came back cold both times."},
-				{"from": "cipher", "body": "whoever built this operation knew we'd check it.\ndesigned it to come back clean."},
-				{"from": "cipher", "body": "we were supposed to be standing\nexactly where we stood."},
+				{"from": "cipher", "body": "I checked that routing twice.\ncame back cold both times."},
+				{"from": "cipher", "body": "whoever built this knew we'd check it.\ndesigned it to come back clean."},
+				{"from": "cipher", "body": "who hired us?"},
 			])
-			GameState.set_flag("ghost_named_it", true)
-		
-		"I read the archive.":
+			await get_tree().create_timer(20.0).timeout
+			_begin_ending_beat_exchange_2()
+
+		"I don't know what we just did.":
+			GameState.set_flag("ghost_rationalized", true)
 			ScriptManager.queue_sequence([
-				{"from": "cipher", "body": "..."},
-				{"from": "cipher", "body": "what was in it?"},
+				{"from": "cipher", "body": "neither do I."},
+				{"from": "cipher", "body": "we followed a clean brief.\nwe did what we were paid to do."},
+				{"from": "cipher", "body": "I keep trying to make that mean something\nand it doesn't."},
+				{"from": "cipher", "body": "who hired us?"},
 			])
-			GameState.set_flag("cipher_knows_truth", true)
-		
-		"the response time was wrong.":
-			ScriptManager.queue_sequence([
-				{"from": "cipher", "body": "I know."},
-				{"from": "cipher", "body": "I've been trying to figure out how they got\nthere that fast."},
-				{"from": "cipher", "body": "the math doesn't work for a standard\nresponse contract."},
-				{"from": "cipher", "body": "pre-staged. had to be."},
-				{"from": "cipher", "body": "which means someone wanted them dead.\nnot just the files gone."},
-			])
+			await get_tree().create_timer(20.0).timeout
+			_begin_ending_beat_exchange_2()
+
+		"calloway knew we were coming.":
 			GameState.set_flag("ghost_flagged_timing", true)
-		
-		"I need to find out who the client is.":
 			ScriptManager.queue_sequence([
-				{"from": "cipher", "body": "yeah."},
-				{"from": "cipher", "body": "yeah, I think so too."},
+				{"from": "cipher", "body": "yes."},
+				{"from": "cipher", "body": "they'd been preparing for a week.\nthey just didn't have enough time."},
+				{"from": "cipher", "body": "someone made sure of that."},
+				{"from": "cipher", "body": "who hired us?"},
 			])
-			GameState.set_flag("client_investigation_flagged", true)
+			await get_tree().create_timer(20.0).timeout
+			_begin_ending_beat_exchange_2()
+
+		"I don't know.":
+			GameState.set_flag("ghost_went_silent_final", true)
+			# No Cipher reply to "I don't know."
+			# Wait — then Ghost sends the second line automatically
+			await get_tree().create_timer(8.0).timeout
+			
+			# Ghost sends automatically — no player input
+			var cl = _get_app_content("cipherlink")
+			if cl:
+				cl._deliver_message({
+					"from": "ghost",
+					"body": "what am I if this is what I do.",
+				})
+			
+			# Cipher does not respond
+			# Long pause — then Cipher's final message
+			await get_tree().create_timer(20.0).timeout
+			
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "I'm here when you're ready.",
+				"delay": 0.0
+			})
+			
+			# Remove all response options permanently
+			await get_tree().create_timer(5.0).timeout
+			if cl:
+				cl.hide_response_options_permanently()
+			
+			# Begin fading epilogue
+			await get_tree().create_timer(10.0).timeout
+			_begin_fading_epilogue()
 
 
-func _trigger_epilogue() -> void:
-	ScriptManager.queue_message({
-		"from": "cipher",
-		"body": "get some rest.\n\nwe'll figure out what we do with this\nin the morning.",
-		"delay": 3.0
-	})
-	await get_tree().create_timer(10.0).timeout
-	ScriptManager.fire_event("epilogue_begin")
-
-
-func _run_epilogue() -> void:
-	# Epilogue messages from Cipher over time
-	# Days pass, messages go unanswered
-	var epilogue_messages: Array = [
-		{"body": "checking in.", "delay": 5.0},
-		{"body": "found something in the client routing.\nnot sure what it means yet.\nwant to look at it together?", "delay": 12.0},
-		{"body": "I hope you're alright.", "delay": 22.0},
-		{"body": "still here.", "delay": 35.0},
-	]
+func _begin_fading_epilogue() -> void:
+	GameState.epilogue_active = true
+	var cl = _get_app_content("cipherlink")
+	if cl:
+		cl.activate_send_failed_mode()
 	
-	for msg: Dictionary in epilogue_messages:
-		await get_tree().create_timer(msg["delay"]).timeout
-		ScriptManager.queue_message({
-			"from": "cipher",
-			"body": msg["body"],
-			"delay": 0.0
-		})
+	var fade_overlay = $FadeOverlay
+	var cipher_fade = $CipherFadeOverlay
 	
-	# Final message
-	await get_tree().create_timer(50.0).timeout
-	ScriptManager.queue_message({
-		"from": "cipher",
-		"body": "wherever you went, I hope it's somewhere quiet.\ntake care of yourself.\n— c",
-		"delay": 0.0
-	})
-	
-	# After final message, wait then show title card
-	await get_tree().create_timer(15.0).timeout
-	_show_title_card()
+	for i in range(_epilogue_sequence.size()):
+		var entry = _epilogue_sequence[i]
+		
+		if entry.get("already_sent", false):
+			# Message already in CipherLink — just do the fade cycle
+			pass
+		else:
+			# Wait, then deliver message
+			await get_tree().create_timer(
+				entry.get("delay_after_fade_in", 2.0)
+			).timeout
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": entry["body"],
+				"delay": 0.0
+			})
+			await get_tree().create_timer(2.0).timeout
+		
+		if entry.get("is_final", false):
+			# Final fade — everything goes dark, doesn't return
+			var tween = create_tween()
+			tween.tween_property(
+				fade_overlay, "color:a", 0.92, 
+				entry["fade_out_duration"]
+			)
+			await tween.finished
+			# CipherLink fades last
+			var tween2 = create_tween()
+			tween2.tween_property(
+				cipher_fade, "color:a", 0.92, 3.0
+			)
+			await tween2.finished
+			await get_tree().create_timer(2.0).timeout
+			_show_title_card()
+			return
+		
+		# Fade everything except CipherLink to near black
+		var tween_out = create_tween()
+		tween_out.tween_property(
+			fade_overlay, "color:a", 0.92,
+			entry["fade_out_duration"]
+		)
+		# CipherLink fades slightly but stays readable
+		var tween_cipher_dim = create_tween()
+		tween_cipher_dim.tween_property(
+			cipher_fade, "color:a", 0.3,
+			entry["fade_out_duration"] + 1.0
+		)
+		await tween_out.finished
+		
+		# Hold in darkness
+		await get_tree().create_timer(
+			entry["darkness_hold"]
+		).timeout
+		
+		# Fade back in — everything
+		var tween_in = create_tween()
+		tween_in.set_parallel(true)
+		tween_in.tween_property(
+			fade_overlay, "color:a", 0.0,
+			entry["fade_in_duration"]
+		)
+		tween_in.tween_property(
+			cipher_fade, "color:a", 0.0,
+			entry["fade_in_duration"]
+		)
+		await tween_in.finished
+		
+		# Hold in light
+		await get_tree().create_timer(
+			entry["light_hold"]
+		).timeout
 
 
 func _show_title_card() -> void:
-	# Fade to black then show "Two years later."
-	# For now just print to confirm it fires
-	print("TITLE CARD: Two years later.")
+	# Create title card overlay
+	var title_overlay = ColorRect.new()
+	title_overlay.color = Color(0.0, 0.0, 0.0, 1.0)
+	title_overlay.anchors_preset = Control.PRESET_FULL_RECT
+	title_overlay.z_index = 100
+	add_child(title_overlay)
+	
+	var label = Label.new()
+	label.text = "Two years later."
+	label.add_theme_color_override("font_color", Color("#8a8a8a"))
+	label.add_theme_font_size_override("font_size", 18)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.anchors_preset = Control.PRESET_FULL_RECT
+	title_overlay.add_child(label)
+	
+	# Fade the label in
+	label.modulate.a = 0.0
+	var tween = create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 3.0)
+	await tween.finished
+	
+	# Hold
+	await get_tree().create_timer(5.0).timeout
+	
+	# Fade out
+	tween = create_tween()
+	tween.tween_property(title_overlay, "modulate:a", 0.0, 3.0)
+	await tween.finished
+	title_overlay.queue_free()
+	
+	# End of prologue — for now just print
+	print("PROLOGUE COMPLETE")
+	# Chapter 1 transition will be implemented here
 
 
 func show_notification() -> void:
+	AudioManager.play_notification()
 	# Pulse the CipherLink icon
 	var icon: Control = $DesktopIcons/CipherLinkIcon
 	var tween: Tween = create_tween()
@@ -642,5 +832,4 @@ func _debug_skip_to_ending_beat() -> void:
 		"delay": 1.0
 	})
 	
-	await get_tree().create_timer(3.0).timeout
-	_begin_ending_beat()
+	_begin_death_response()

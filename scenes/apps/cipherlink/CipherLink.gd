@@ -4,19 +4,17 @@ signal first_opened
 
 var _first_open: bool = true
 var _send_failed_mode: bool = false
+var _options_permanently_hidden: bool = false
 var _used_ending_options: Array = []
 
 @onready var _messages: VBoxContainer = $MessagePanel/MessageScroll/MessageContainer
 @onready var _scroll: ScrollContainer = $MessagePanel/MessageScroll
-@onready var _input: LineEdit = $MessagePanel/InputRow/InputField
 @onready var _response_options: VBoxContainer = $MessagePanel/ResponseOptions
 @onready var _presence: ColorRect = $ContactsSidebar/VBoxContainer/ContactList/CipherContact/PresenceIndicator
 
 func _ready() -> void:
 	_presence.color = Color("#3a8a3a")
-	_input.text_submitted.connect(_on_input_submitted)
 	ScriptManager.message_queued.connect(_on_message_received)
-	_input.focus_mode = Control.FOCUS_CLICK
 	
 	# Check for any pending messages that arrived while CipherLink was closed
 	var history: Array[Dictionary] = ScriptManager.get_message_history()
@@ -25,9 +23,6 @@ func _ready() -> void:
 	
 	if not GameState.brief_delivered:
 		_on_first_open()
-	
-	# Grab focus on the input field after everything is set up
-	_input.call_deferred("grab_focus")
 
 func _on_first_open() -> void:
 	first_opened.emit()
@@ -77,6 +72,9 @@ func _deliver_message(msg: Dictionary, silent: bool = false) -> void:
 		GameState.record_activity()
 
 func show_response_options(options: Array, ending_beat: bool = false) -> void:
+	if _options_permanently_hidden or _send_failed_mode:
+		return
+		
 	for child in _response_options.get_children():
 		child.queue_free()
 	
@@ -98,14 +96,9 @@ func show_response_options(options: Array, ending_beat: bool = false) -> void:
 		btn.add_theme_font_size_override("font_size", 13)
 		btn.custom_minimum_size = Vector2(0, 24)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if ending_beat:
-			btn.pressed.connect(
-				_on_response_selected.bind(option, true)
-			)
-		else:
-			btn.pressed.connect(
-				_on_response_selected.bind(option, false)
-			)
+		btn.pressed.connect(
+			_on_response_selected.bind(option, ending_beat)
+		)
 		_response_options.add_child(btn)
 	
 	_response_options.visible = true
@@ -119,38 +112,8 @@ func _on_response_selected(text: String, ending_beat: bool = false) -> void:
 		child.queue_free()
 	
 	if ending_beat:
-		_used_ending_options.append(text)
-		# Queue remaining options after delay
-		await get_tree().create_timer(3.0).timeout
-		var remaining: Array = []
-		var all_options: Array = [
-			"we didn't know.",
-			"we were used.",
-			"I read the archive.",
-			"the response time was wrong.",
-			"I need to find out who the client is.",
-		]
-		for opt: String in all_options:
-			if opt not in _used_ending_options:
-				remaining.append(opt)
-		if remaining.size() > 0:
-			show_response_options(remaining, true)
-		else:
-			# All options used — trigger ending beat complete
-			ScriptManager.fire_event("ending_beat_complete")
-
-func _on_input_submitted(text: String) -> void:
-	if text.strip_edges().is_empty():
-		return
-	
-	if _send_failed_mode:
-		_handle_send_failed()
-		_input.clear()
-		return
-	
-	_send_ghost_message(text)
-	_input.clear()
-	GameState.record_activity()
+		# Ending beat logic now handled by Desktop via ghost_sent_message events
+		pass
 
 func _send_ghost_message(text: String) -> void:
 	_deliver_message({
@@ -162,35 +125,18 @@ func _send_ghost_message(text: String) -> void:
 	await get_tree().process_frame
 	_scroll_to_bottom()
 
-func show_ending_beat_options() -> void:
-	# These are Ghost's available responses in the ending beat
-	# Player can select any, and can engage multiple times
-	# Options disappear after selection but can reappear
-	show_response_options([
-		"we didn't know.",
-		"we were used.",
-		"I read the archive.",
-		"the response time was wrong.",
-		"I need to find out who the client is.",
-	], true)
+func hide_response_options_permanently() -> void:
+	_response_options.visible = false
+	for child in _response_options.get_children():
+		child.queue_free()
+	# Flag to prevent any future show_response_options calls
+	_options_permanently_hidden = true
 
 func activate_send_failed_mode() -> void:
 	_send_failed_mode = true
 	_presence.color = Color("#4a4a4a")
-
-func _handle_send_failed() -> void:
-	await get_tree().create_timer(0.3).timeout
-	
-	var label: Label = Label.new()
-	label.text = "no active route"
-	label.add_theme_color_override("font_color", Color("#4a4a4a"))
-	label.add_theme_font_size_override("font_size", 10)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_messages.add_child(label)
-	_scroll_to_bottom()
-	
-	await get_tree().create_timer(2.0).timeout
-	label.queue_free()
+	# If response options are visible, hide them
+	_response_options.visible = false
 
 func _scroll_to_bottom() -> void:
 	_scroll.scroll_vertical = _scroll.get_v_scroll_bar().max_value
