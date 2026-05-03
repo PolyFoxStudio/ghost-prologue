@@ -4,6 +4,7 @@ signal first_opened
 
 var _first_open: bool = true
 var _send_failed_mode: bool = false
+var _used_ending_options: Array = []
 
 @onready var _messages: VBoxContainer = $MessagePanel/MessageScroll/MessageContainer
 @onready var _scroll: ScrollContainer = $MessagePanel/MessageScroll
@@ -76,23 +77,44 @@ func _deliver_message(msg: Dictionary, silent: bool = false) -> void:
 		_scroll_to_bottom()
 		GameState.record_activity()
 
-func show_response_options(options: Array) -> void:
+func show_response_options(options: Array, ending_beat: bool = false) -> void:
 	for child in _response_options.get_children():
 		child.queue_free()
 	
-	for option in options:
+	for option: String in options:
 		var button: Button = Button.new()
 		button.text = option
-		button.pressed.connect(_on_response_selected.bind(option))
+		button.pressed.connect(_on_response_selected.bind(option, ending_beat))
 		_response_options.add_child(button)
 	
 	_response_options.visible = true
 
-func _on_response_selected(text: String) -> void:
+func _on_response_selected(text: String, ending_beat: bool = false) -> void:
 	_send_ghost_message(text)
 	_response_options.visible = false
 	for child in _response_options.get_children():
 		child.queue_free()
+	
+	if ending_beat:
+		_used_ending_options.append(text)
+		# Queue remaining options after delay
+		await get_tree().create_timer(3.0).timeout
+		var remaining: Array = []
+		var all_options: Array = [
+			"we didn't know.",
+			"we were used.",
+			"I read the archive.",
+			"the response time was wrong.",
+			"I need to find out who the client is.",
+		]
+		for opt: String in all_options:
+			if opt not in _used_ending_options:
+				remaining.append(opt)
+		if remaining.size() > 0:
+			show_response_options(remaining, true)
+		else:
+			# All options used — trigger ending beat complete
+			ScriptManager.fire_event("ending_beat_complete")
 
 func _on_input_submitted(text: String) -> void:
 	if text.strip_edges().is_empty():
@@ -118,6 +140,18 @@ func _send_ghost_message(text: String) -> void:
 	
 	await get_tree().process_frame
 	_scroll_to_bottom()
+
+func show_ending_beat_options() -> void:
+	# These are Ghost's available responses in the ending beat
+	# Player can select any, and can engage multiple times
+	# Options disappear after selection but can reappear
+	show_response_options([
+		"we didn't know.",
+		"we were used.",
+		"I read the archive.",
+		"the response time was wrong.",
+		"I need to find out who the client is.",
+	], true)
 
 func activate_send_failed_mode() -> void:
 	_send_failed_mode = true

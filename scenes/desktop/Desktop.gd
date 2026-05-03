@@ -289,15 +289,31 @@ func _on_world_event(event_name: String) -> void:
 				"body": "ghost.\n\ncalloway is dead.\n\nthe report's being filed as accidental.\nthey're calling it a fall.\n\nI've seen these reports before.\nthis one is not that.\n\nthis is not what we were hired to do.",
 				"delay": 1.0
 			})
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "talk to me.\n\nI need to know what you're thinking.",
+				"delay": 180.0
+			})
+			_begin_ending_beat()
 		
 		"epilogue_begin":
 			var cl: Node = _get_cipherlink()
 			if cl:
 				cl.activate_send_failed_mode()
-			print("Epilogue begin — scene transition placeholder")
+			
+			# Start epilogue message sequence
+			_run_epilogue()
+		
+		"ending_beat_complete":
+			_trigger_epilogue()
 		
 		_:
-			print("World event: " + event_name)
+			# Check for ghost_sent_message events in ending beat
+			if event_name.begins_with("ghost_sent_message:"):
+				var message: String = event_name.substr("ghost_sent_message:".length())
+				_handle_ghost_ending_response(message)
+			else:
+				print("World event: " + event_name)
 
 
 func _input(event: InputEvent) -> void:
@@ -352,3 +368,100 @@ func _on_icon_input(event: InputEvent, app_name: String) -> void:
 func set_notification(app_name: String, active: bool) -> void:
 	_notifications[app_name] = active
 	# Visual notification on icons will be added in the styling pass
+
+
+func _begin_ending_beat() -> void:
+	await get_tree().create_timer(182.0).timeout
+	var cl: Node = _get_cipherlink()
+	if cl and cl.has_method("show_ending_beat_options"):
+		cl.show_ending_beat_options()
+
+
+func _handle_ghost_ending_response(message: String) -> void:
+	match message:
+		"we didn't know.":
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "yeah.\n\nwe didn't.\n\nI'm going to need to sit with that for a while.",
+				"delay": 4.0
+			})
+			GameState.set_flag("ghost_rationalized", true)
+		
+		"we were used.":
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "yes. we were.\n\nI checked that routing twice.\nit came back cold both times.\n\nwhoever built this operation knew we'd check it.\ndesigned it to come back clean.\n\nwe were supposed to be standing\nexactly where we stood.",
+				"delay": 4.0
+			})
+			GameState.set_flag("ghost_named_it", true)
+		
+		"I read the archive.":
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "...\n\nwhat was in it?",
+				"delay": 4.0
+			})
+			GameState.set_flag("cipher_knows_truth", true)
+		
+		"the response time was wrong.":
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "I know.\n\nI've been trying to figure out how they got\nthere that fast. the math doesn't work for\na standard response contract.\n\npre-staged. had to be.\n\nwhich means someone wanted them dead.\nnot just the files gone.",
+				"delay": 4.0
+			})
+			GameState.set_flag("ghost_flagged_timing", true)
+		
+		"I need to find out who the client is.":
+			ScriptManager.queue_message({
+				"from": "cipher",
+				"body": "yeah.\n\nyeah, I think so too.",
+				"delay": 4.0
+			})
+			GameState.set_flag("client_investigation_flagged", true)
+
+
+func _trigger_epilogue() -> void:
+	ScriptManager.queue_message({
+		"from": "cipher",
+		"body": "get some rest.\n\nwe'll figure out what we do with this\nin the morning.",
+		"delay": 3.0
+	})
+	await get_tree().create_timer(10.0).timeout
+	ScriptManager.fire_event("epilogue_begin")
+
+
+func _run_epilogue() -> void:
+	# Epilogue messages from Cipher over time
+	# Days pass, messages go unanswered
+	var epilogue_messages: Array = [
+		{"body": "checking in.", "delay": 5.0},
+		{"body": "found something in the client routing.\nnot sure what it means yet.\nwant to look at it together?", "delay": 12.0},
+		{"body": "I hope you're alright.", "delay": 22.0},
+		{"body": "still here.", "delay": 35.0},
+	]
+	
+	for msg: Dictionary in epilogue_messages:
+		await get_tree().create_timer(msg["delay"]).timeout
+		ScriptManager.queue_message({
+			"from": "cipher",
+			"body": msg["body"],
+			"delay": 0.0
+		})
+	
+	# Final message
+	await get_tree().create_timer(50.0).timeout
+	ScriptManager.queue_message({
+		"from": "cipher",
+		"body": "wherever you went, I hope it's somewhere quiet.\ntake care of yourself.\n— c",
+		"delay": 0.0
+	})
+	
+	# After final message, wait then show title card
+	await get_tree().create_timer(15.0).timeout
+	_show_title_card()
+
+
+func _show_title_card() -> void:
+	# Fade to black then show "Two years later."
+	# For now just print to confirm it fires
+	print("TITLE CARD: Two years later.")
