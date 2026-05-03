@@ -9,7 +9,7 @@ var _used_ending_options: Array = []
 @onready var _messages: VBoxContainer = $MessagePanel/MessageScroll/MessageContainer
 @onready var _scroll: ScrollContainer = $MessagePanel/MessageScroll
 @onready var _input: LineEdit = $MessagePanel/InputRow/InputField
-@onready var _response_options: HBoxContainer = $MessagePanel/ResponseOptions
+@onready var _response_options: VBoxContainer = $MessagePanel/ResponseOptions
 @onready var _presence: ColorRect = $ContactsSidebar/VBoxContainer/ContactList/CipherContact/PresenceIndicator
 
 func _ready() -> void:
@@ -45,32 +45,37 @@ func _on_message_received(msg: Dictionary) -> void:
 
 func _deliver_message(msg: Dictionary, silent: bool = false) -> void:
 	var container: VBoxContainer = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 2)
 	
-	# Timestamp
-	var timestamp_label: Label = Label.new()
-	timestamp_label.text = msg.get("timestamp", _get_current_time())
-	timestamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	timestamp_label.add_theme_color_override("font_color", Color("#4a4a4a"))
-	timestamp_label.add_theme_font_size_override("font_size", 10)
+	# Header line: "cipher (23:08)" or "ghost (23:08)"
+	var sender: String = msg.get("from", "cipher")
+	var timestamp: String = msg.get("timestamp", _get_current_time())
+	var header: Label = Label.new()
+	header.text = sender + " (" + timestamp + ")"
+	header.add_theme_font_size_override("font_size", 11)
+	if sender == "ghost":
+		header.add_theme_color_override("font_color", Color("#8a5a0a"))
+	else:
+		header.add_theme_color_override("font_color", Color("#4a4a4a"))
 	
 	# Message body
-	var body_label: Label = Label.new()
-	body_label.text = msg["body"]
-	body_label.add_theme_color_override("font_color", Color("#d4d4d4"))
-	body_label.add_theme_font_size_override("font_size", 13)
-	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var body: Label = Label.new()
+	body.text = msg["body"]
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_font_size_override("font_size", 13)
+	if sender == "ghost":
+		body.add_theme_color_override("font_color", Color("#c8841a"))
+	else:
+		body.add_theme_color_override("font_color", Color("#d4d4d4"))
 	
-	container.add_child(timestamp_label)
-	container.add_child(body_label)
+	# Spacer below message
+	var spacer: Control = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 8)
+	
+	container.add_child(header)
+	container.add_child(body)
+	container.add_child(spacer)
 	_messages.add_child(container)
-	
-	# Read receipt
-	var receipt_label: Label = Label.new()
-	receipt_label.text = "[READ]"
-	receipt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	receipt_label.add_theme_color_override("font_color", Color("#4a4a4a"))
-	receipt_label.add_theme_font_size_override("font_size", 10)
-	container.add_child(receipt_label)
 	
 	if not silent:
 		await get_tree().process_frame
@@ -81,13 +86,37 @@ func show_response_options(options: Array, ending_beat: bool = false) -> void:
 	for child in _response_options.get_children():
 		child.queue_free()
 	
+	# Add a subtle prompt indicator
+	var prompt_label: Label = Label.new()
+	prompt_label.text = ">"
+	prompt_label.add_theme_color_override("font_color", Color("#4a4a4a"))
+	prompt_label.add_theme_font_size_override("font_size", 13)
+	_response_options.add_child(prompt_label)
+	
 	for option: String in options:
-		var button: Button = Button.new()
-		button.text = option
-		button.pressed.connect(_on_response_selected.bind(option, ending_beat))
-		_response_options.add_child(button)
+		var btn: Button = Button.new()
+		btn.text = option
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.flat = true
+		btn.add_theme_color_override("font_color", Color("#8a8a8a"))
+		btn.add_theme_color_override("font_color_hover", Color("#d4d4d4"))
+		btn.add_theme_color_override("font_color_pressed", Color("#c8841a"))
+		btn.add_theme_font_size_override("font_size", 13)
+		btn.custom_minimum_size = Vector2(0, 24)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if ending_beat:
+			btn.pressed.connect(
+				_on_response_selected.bind(option, true)
+			)
+		else:
+			btn.pressed.connect(
+				_on_response_selected.bind(option, false)
+			)
+		_response_options.add_child(btn)
 	
 	_response_options.visible = true
+	await get_tree().process_frame
+	_scroll_to_bottom()
 
 func _on_response_selected(text: String, ending_beat: bool = false) -> void:
 	_send_ghost_message(text)
@@ -130,14 +159,12 @@ func _on_input_submitted(text: String) -> void:
 	GameState.record_activity()
 
 func _send_ghost_message(text: String) -> void:
-	ScriptManager.queue_message({
+	_deliver_message({
 		"from": "ghost",
 		"body": text,
 		"timestamp": _get_current_time()
 	})
-	
 	ScriptManager.fire_event("ghost_sent_message:" + text)
-	
 	await get_tree().process_frame
 	_scroll_to_bottom()
 

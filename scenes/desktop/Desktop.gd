@@ -323,6 +323,11 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
 		_objectives_board.toggle()
 		get_viewport().set_input_as_handled()
+	
+	# DEBUG ONLY — remove before release
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_F1:
+			_debug_skip_to_ending_beat()
 
 
 func _show_desktop_right_click(pos: Vector2) -> void:
@@ -465,3 +470,40 @@ func _show_title_card() -> void:
 	# Fade to black then show "Two years later."
 	# For now just print to confirm it fires
 	print("TITLE CARD: Two years later.")
+
+
+func _debug_skip_to_ending_beat() -> void:
+	# Set all state flags as if the full sequence completed
+	GameState.vpn_established = true
+	GameState.archive_located = true
+	GameState.transfer_complete = true
+	GameState.wipe_complete = true
+	GameState.logs_cleared = true
+	GameState.calloway_aware = true
+	GameState.alarm_fired = true
+	GameState.objective_stage = 6
+	GameState.brief_delivered = true
+	
+	# Set some story flags for variety
+	GameState.ghost_read_readme = true
+	GameState.ghost_knows_mayas_name = true
+	
+	# Advance objectives board to complete
+	_objectives_board.refresh()
+	
+	# Open CipherLink if not already open
+	if "cipherlink" not in _open_windows:
+		open_app("cipherlink")
+	
+	# Wait a frame for CipherLink to initialise
+	await get_tree().process_frame
+	
+	# Queue Calloway's death message then trigger ending beat
+	ScriptManager.queue_message({
+		"from": "cipher",
+		"body": "ghost.\n\ncalloway is dead.\n\nthe report's being filed as accidental.\nthey're calling it a fall.\n\nI've seen these reports before.\nthis one is not that.\n\nthis is not what we were hired to do.",
+		"delay": 1.0
+	})
+	
+	await get_tree().create_timer(3.0).timeout
+	_begin_ending_beat()
