@@ -40,6 +40,10 @@ var last_activity_time: float = 0.0
 var last_stage_advance_time: float = 0.0
 var transfer_progress: float = 0.0
 
+# Notepad integration
+var _pending_notepad_content: String = ""
+var _pending_notepad_filename: String = ""
+
 # Signals
 signal stage_advanced(new_stage: int)
 signal flag_changed(flag_name: String, value: bool)

@@ -1,0 +1,76 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5w8hy2r3qmjf"]
+
+[ext_resource type="Script" path="res://scenes/apps/files/FileBrowser.gd" id="1_FileBrowser"]
+
+[node name="FileBrowser" type="HSplitContainer"]
+script = ExtResource("1_FileBrowser")
+
+[node name="DirectoryTree" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DirectoryTree"]
+layout_mode = 2
+
+[node name="TreeHeader" type="Label" parent="DirectoryTree/VBoxContainer"]
+layout_mode = 2
+text = "FILES"
+
+[node name="HSeparator" type="HSeparator" parent="DirectoryTree/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="DirectoryTree/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TreeContainer" type="VBoxContainer" parent="DirectoryTree/VBoxContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ContentPanel" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PathBar" type="PanelContainer" parent="ContentPanel"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+
+[node name="PathLabel" type="Label" parent="ContentPanel/PathBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "/home/ghost"
+
+[node name="HSeparator" type="HSeparator" parent="ContentPanel"]
+layout_mode = 2
+
+[node name="ColumnHeaders" type="HBoxContainer" parent="ContentPanel"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="NameHeader" type="Label" parent="ContentPanel/ColumnHeaders"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "NAME"
+
+[node name="SizeHeader" type="Label" parent="ContentPanel/ColumnHeaders"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "SIZE"
+
+[node name="ModifHeader" type="Label" parent="ContentPanel/ColumnHeaders"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "MODIFIED"
+
+[node name="HSeparator2" type="HSeparator" parent="ContentPanel"]
+layout_mode = 2
+
+[node name="ContentScroll" type="ScrollContainer" parent="ContentPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ContentContainer" type="VBoxContainer" parent="ContentPanel/ContentScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3

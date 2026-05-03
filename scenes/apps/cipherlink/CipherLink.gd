@@ -31,40 +31,7 @@ func _ready() -> void:
 
 func _on_first_open() -> void:
 	first_opened.emit()
-	GameState.advance_stage(1)
-	ScriptManager.fire_event("brief_delivered")
-	
-	ScriptManager.queue_sequence([
-		{
-			"from": "cipher",
-			"body": "alright. job's live.",
-			"timestamp": "23:08"
-		},
-		{
-			"from": "cipher",
-			"body": "routing's clean — I checked it twice.\ncame back cold both times.",
-		},
-		{
-			"from": "cipher",
-			"body": "target is jordan calloway. corporate analyst,\nvantage dynamics. mid-level. access to the\ninternal document archive.",
-		},
-		{
-			"from": "cipher",
-			"body": "they've been doing something with it —\nmoving files around, compressing batches.\nthe pattern looks like staged extraction.",
-		},
-		{
-			"from": "cipher",
-			"body": "client thinks calloway is building a package\nfor a competitor.",
-		},
-		{
-			"from": "cipher",
-			"body": "your job: get in ahead of them. pull whatever\nthey've staged, wipe the trail.\nstandard IP protection work.",
-		},
-		{
-			"from": "cipher",
-			"body": "I've got calloway's home network mapped.\nbrief's in your downloads.",
-		},
-	])
+	# Brief delivery and stage advance now handled by Desktop._begin_opening_sequence()
 
 func _on_message_received(msg: Dictionary) -> void:
 	_deliver_message(msg)

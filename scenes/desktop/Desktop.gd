@@ -6,7 +6,7 @@ extends Control
 # Preload app scenes
 const TERMINAL_SCENE: PackedScene = preload("res://scenes/apps/terminal/Terminal.tscn")
 const CIPHERLINK_SCENE: PackedScene = preload("res://scenes/apps/cipherlink/CipherLink.tscn")
-# const FILES_SCENE = preload("res://scenes/apps/files/FileBrowser.tscn")
+const FILES_SCENE: PackedScene = preload("res://scenes/apps/files/FileBrowser.tscn")
 # const NOTEPAD_SCENE = preload("res://scenes/apps/notepad/Notepad.tscn")
 
 const APP_WINDOW_SCENE: PackedScene = preload("res://scenes/ui/AppWindow.tscn")
@@ -55,7 +55,8 @@ func _ready() -> void:
 	add_child(timer)
 	timer.start()
 	
-	# CipherLink notification will be handled when app opens
+	# Start opening sequence after short delay
+	_begin_opening_sequence()
 
 
 func _update_clock() -> void:
@@ -88,8 +89,9 @@ func open_app(app_name: String) -> void:
 				app_content = CIPHERLINK_SCENE.instantiate()
 				window_title = "CipherLink"
 		"files":
-			print("open_app: files — not yet implemented")
-			return
+			if FILES_SCENE:
+				app_content = FILES_SCENE.instantiate()
+				window_title = "Files"
 		"notepad":
 			print("open_app: notepad — not yet implemented")
 			return
@@ -320,6 +322,9 @@ func _on_world_event(event_name: String) -> void:
 			if event_name.begins_with("ghost_sent_message:"):
 				var message: String = event_name.substr("ghost_sent_message:".length())
 				_handle_ghost_ending_response(message)
+			elif event_name.begins_with("open_notepad:"):
+				open_app("notepad")
+				# Notepad will read pending content from GameState on open
 			else:
 				print("World event: " + event_name)
 
@@ -332,6 +337,49 @@ func _begin_alarm_options() -> void:
 			"can you warn them?",
 			"not our job.",
 		])
+
+
+func _begin_opening_sequence() -> void:
+	# Wait 8 seconds after game start before first message arrives
+	# Gives the player time to look at the desktop before anything happens
+	await get_tree().create_timer(8.0).timeout
+	
+	ScriptManager.queue_sequence([
+		{
+			"from": "cipher",
+			"body": "alright. job's live.",
+		},
+		{
+			"from": "cipher",
+			"body": "routing's clean — I checked it twice.\ncame back cold both times.",
+		},
+		{
+			"from": "cipher",
+			"body": "target is jordan calloway. corporate analyst,\nvantage dynamics. mid-level. access to the\ninternal document archive.",
+		},
+		{
+			"from": "cipher",
+			"body": "they've been doing something with it —\nmoving files around, compressing batches.\nthe pattern looks like staged extraction.",
+		},
+		{
+			"from": "cipher",
+			"body": "client thinks calloway is building a package\nfor a competitor.",
+		},
+		{
+			"from": "cipher",
+			"body": "your job: get in ahead of them. pull whatever\nthey've staged, wipe the trail.\nstandard IP protection work.",
+		},
+		{
+			"from": "cipher",
+			"body": "I've got calloway's home network mapped.\nbrief's in your downloads.",
+		},
+	])
+	
+	# Brief arrives roughly when the last message does
+	# queue_sequence delivers ~7 messages at ~3s each = ~21s total
+	await get_tree().create_timer(25.0).timeout
+	ScriptManager.fire_event("brief_delivered")
+	GameState.advance_stage(1)
 
 
 func _input(event: InputEvent) -> void:
@@ -531,6 +579,11 @@ func _on_cipherlink_closed() -> void:
 
 
 func _debug_skip_to_ending_beat() -> void:
+	# Cancel opening sequence if it hasn't fired yet
+	# Set brief_delivered flag directly
+	GameState.brief_delivered = true
+	GameState.advance_stage(1)
+	
 	# Set all state flags as if the full sequence completed
 	GameState.vpn_established = true
 	GameState.archive_located = true
@@ -540,7 +593,6 @@ func _debug_skip_to_ending_beat() -> void:
 	GameState.calloway_aware = true
 	GameState.alarm_fired = true
 	GameState.objective_stage = 6
-	GameState.brief_delivered = true
 	
 	# Set some story flags for variety
 	GameState.ghost_read_readme = true
