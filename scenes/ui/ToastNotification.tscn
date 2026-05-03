@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://toast01"]
+
+[ext_resource type="Script" path="res://scenes/ui/ToastNotification.gd" id="1_toast"]
+
+[node name="ToastNotification" type="PanelContainer"]
+offset_right = 300.0
+offset_bottom = 60.0
+script = ExtResource("1_toast")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Icon" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "✉"
+
+[node name="Message" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.83, 0.83, 1)
+theme_override_font_sizes/font_size = 13
+text = "new message from cipher"

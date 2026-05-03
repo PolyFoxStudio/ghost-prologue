@@ -6,9 +6,14 @@ extends Node
 # Signals
 signal message_queued(message: Dictionary)
 signal world_event_fired(event_name: String)
+signal notification_needed
 
 # History of all messages for CipherLink
 var _message_history: Array[Dictionary] = []
+
+# Sequence gating for CipherLink
+var _pending_sequences: Dictionary = {}
+var _cipherlink_open: bool = false
 
 
 func queue_message(msg: Dictionary) -> void:
@@ -41,6 +46,52 @@ func _send_message(msg: Dictionary) -> void:
 	
 	# Emit the message (for if CipherLink is already open)
 	message_queued.emit(msg)
+
+
+func set_cipherlink_open(is_open: bool) -> void:
+	_cipherlink_open = is_open
+	if is_open and not _pending_sequences.is_empty():
+		_flush_pending_sequences()
+
+
+func queue_sequence(messages: Array) -> void:
+	# First message always delivers immediately
+	if messages.is_empty():
+		return
+	_send_message(messages[0])
+	
+	if messages.size() == 1:
+		return
+	
+	var remaining: Array = messages.slice(1)
+	
+	if _cipherlink_open:
+		# CipherLink is open — deliver with normal delays
+		var base_delay: float = 2.0
+		for msg: Dictionary in remaining:
+			var adjusted: Dictionary = msg.duplicate()
+			adjusted["delay"] = base_delay
+			base_delay += randf_range(2.0, 4.0)
+			queue_message(adjusted)
+	else:
+		# CipherLink is closed — hold remaining messages
+		# Emit notification signal
+		notification_needed.emit()
+		_pending_sequences["cipherlink"] = remaining
+
+
+func _flush_pending_sequences() -> void:
+	if not _pending_sequences.has("cipherlink"):
+		return
+	var messages: Array = _pending_sequences["cipherlink"].duplicate()
+	_pending_sequences.erase("cipherlink")
+	
+	var base_delay: float = 2.0
+	for msg: Dictionary in messages:
+		var adjusted: Dictionary = msg.duplicate()
+		adjusted["delay"] = base_delay
+		base_delay += randf_range(2.0, 4.0)
+		queue_message(adjusted)
 
 
 func fire_event(event_name: String) -> void:
