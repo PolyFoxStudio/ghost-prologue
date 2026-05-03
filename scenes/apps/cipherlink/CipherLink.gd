@@ -34,8 +34,8 @@ func _on_first_open() -> void:
 	# Brief delivery and stage advance now handled by Desktop._begin_opening_sequence()
 
 func _on_message_received(msg: Dictionary) -> void:
-	_deliver_message(msg)
 	AudioManager.play_message_receive()
+	_deliver_message(msg)
 
 func _deliver_message(msg: Dictionary, silent: bool = false) -> void:
 	var container: VBoxContainer = VBoxContainer.new()

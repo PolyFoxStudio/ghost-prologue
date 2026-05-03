@@ -33,6 +33,7 @@ var alarm_fired: bool = false
 var epilogue_active: bool = false
 var transfer_running: bool = false
 var brief_delivered: bool = false
+var notifications_enabled: bool = true
 
 # Progression tracking
 var objective_stage: int = 0

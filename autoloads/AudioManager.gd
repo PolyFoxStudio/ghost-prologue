@@ -1,8 +1,5 @@
 extends Node
 
-## AudioManager
-## Audio playback and mixing control for GHOST
-
 @export var message_receive: AudioStream
 @export var transfer_complete: AudioStream
 
@@ -10,26 +7,47 @@ extends Node
 @onready var _sfx_terminal: AudioStreamPlayer = $SFX_Terminal
 @onready var _ambient: AudioStreamPlayer = $Ambient
 
+func _ready() -> void:
+	# Assign streams if exported vars are set
+	if message_receive:
+		_sfx_ui.stream = message_receive
+	if transfer_complete:
+		_sfx_terminal.stream = transfer_complete
 
 func play_message_receive() -> void:
-	_sfx_ui.stream = message_receive
-	_sfx_ui.play()
-
+	if _sfx_ui.stream:
+		_sfx_ui.play()
 
 func play_transfer_complete() -> void:
-	_sfx_terminal.stream = transfer_complete
-	_sfx_terminal.play()
-
+	if _sfx_terminal.stream:
+		_sfx_terminal.play()
 
 func fade_in_ambient(duration: float) -> void:
-	var bus_idx: int = AudioServer.get_bus_index("Ambient")
-	AudioServer.set_bus_volume_db(bus_idx, -80.0)
-	
-	var tween: Tween = create_tween()
+	# Fade Ambient bus from -80dB to -20dB over duration seconds
+	var tween = create_tween()
 	tween.tween_method(
-		func(volume: float) -> void:
-			AudioServer.set_bus_volume_db(bus_idx, volume),
-		-80.0,
-		-20.0,
-		duration
+		func(vol: float): 
+			AudioServer.set_bus_volume_db(
+				AudioServer.get_bus_index("Ambient"), vol
+			),
+		-80.0, -20.0, duration
 	)
+
+func set_ambient_stream(stream: AudioStream) -> void:
+	_ambient.stream = stream
+	_ambient.play()
+
+func stop_ambient() -> void:
+	var tween = create_tween()
+	tween.tween_method(
+		func(vol: float):
+			AudioServer.set_bus_volume_db(
+				AudioServer.get_bus_index("Ambient"), vol
+			),
+		AudioServer.get_bus_volume_db(
+			AudioServer.get_bus_index("Ambient")
+		),
+		-80.0, 2.0
+	)
+	await tween.finished
+	_ambient.stop()

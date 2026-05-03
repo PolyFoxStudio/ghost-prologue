@@ -1,9 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://bp1k8ksb1pboh"]
+[gd_scene load_steps=4 format=3 uid="uid://bp1k8ksb1pboh"]
 
 [ext_resource type="Script" path="res://autoloads/AudioManager.gd" id="1_audio"]
+[ext_resource type="AudioStream" path="res://resources/audio/message_receive.wav" id="2_msg"]
+[ext_resource type="AudioStream" path="res://resources/audio/transfer_complete.wav" id="3_trns"]
 
 [node name="AudioManager" type="Node"]
 script = ExtResource("1_audio")
+message_receive = ExtResource("2_msg")
+transfer_complete = ExtResource("3_trns")
 
 [node name="SFX_UI" type="AudioStreamPlayer" parent="."]
 bus = &"UI"
