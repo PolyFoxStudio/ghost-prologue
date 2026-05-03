@@ -8,6 +8,7 @@ const TERMINAL_SCENE: PackedScene = preload("res://scenes/apps/terminal/Terminal
 const CIPHERLINK_SCENE: PackedScene = preload("res://scenes/apps/cipherlink/CipherLink.tscn")
 const FILES_SCENE: PackedScene = preload("res://scenes/apps/files/FileBrowser.tscn")
 const NOTEPAD_SCENE: PackedScene = preload("res://scenes/apps/notepad/Notepad.tscn")
+const VIEWER_SCENE: PackedScene = preload("res://scenes/apps/file_viewer/FileViewer.tscn")
 
 const APP_WINDOW_SCENE: PackedScene = preload("res://scenes/ui/AppWindow.tscn")
 const TOAST_SCENE: PackedScene = preload("res://scenes/ui/ToastNotification.tscn")
@@ -67,45 +68,35 @@ func _update_clock() -> void:
 
 
 func open_app(app_name: String) -> void:
-	# Special handling for notepad — allow multiple instances
-	if app_name == "notepad":
-		if NOTEPAD_SCENE:
-			var app_content: Control = NOTEPAD_SCENE.instantiate()
-			var window: PanelContainer = APP_WINDOW_SCENE.instantiate()
-			window.title = "notepad"
-			window.size = Vector2(640, 480)
-			
-			# Add app content to window
-			var app_container: MarginContainer = window.get_node("VBoxContainer/AppContainer")
-			app_container.add_child(app_content)
-			
-			# Add window to layer
-			_window_layer.add_child(window)
-			
-			# Position window
-			_position_new_window(window)
-			
-			# Use unique key for multiple notepad instances
-			var key: String = "notepad_" + str(Time.get_ticks_msec())
-			_open_windows[key] = window
-			
-			# Connect closed signal with unique key
-			window.closed.connect(_on_window_closed.bind(key))
-			window.minimized.connect(_on_window_minimized.bind(key))
-			
-			# Create taskbar button
-			_create_taskbar_button(key, "notepad", window)
-			
-			# Focus the window
-			window.call_deferred("grab_focus")
+	# Special handling for multiple instances
+	if app_name == "viewer":
+		var app_content = VIEWER_SCENE.instantiate()
+		var window: PanelContainer = APP_WINDOW_SCENE.instantiate()
+		window.title = "viewer"
+		window.size = Vector2(600, 400)
+		window.get_node("VBoxContainer/AppContainer").add_child(app_content)
+		_window_layer.add_child(window)
+		_position_new_window(window)
+		
+		var key = "viewer_" + str(Time.get_ticks_msec())
+		_open_windows[key] = window
+		window.closed.connect(_on_window_closed.bind(key))
+		window.call_deferred("grab_focus")
 		return
-	
+
 	# If window already open, bring to front
 	if app_name in _open_windows:
 		var window: Control = _open_windows[app_name]
 		var parent: Node = window.get_parent()
 		if parent:
 			parent.move_child(window, parent.get_child_count() - 1)
+			window.restore()
+		
+		# If Notepad is already open and we have a pending file to open
+		if app_name == "notepad" and GameState.get("_pending_notepad_content") != "":
+			var app_content = _get_app_content("notepad")
+			if app_content and app_content.has_method("load_pending_content"):
+				app_content.load_pending_content()
 		return
 	
 	# Instantiate the appropriate app scene
@@ -125,6 +116,10 @@ func open_app(app_name: String) -> void:
 			if FILES_SCENE:
 				app_content = FILES_SCENE.instantiate()
 				window_title = "Files"
+		"notepad":
+			if NOTEPAD_SCENE:
+				app_content = NOTEPAD_SCENE.instantiate()
+				window_title = "notepad"
 	
 	if not app_content:
 		return
@@ -352,6 +347,8 @@ func _on_world_event(event_name: String) -> void:
 			if event_name.begins_with("ghost_sent_message:"):
 				var message: String = event_name.substr("ghost_sent_message:".length())
 				_handle_ghost_ending_response(message)
+			elif event_name.begins_with("open_viewer:"):
+				open_app("viewer")
 			elif event_name.begins_with("open_notepad:"):
 				open_app("notepad")
 				# Notepad will read pending content from GameState on open

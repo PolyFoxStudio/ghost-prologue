@@ -41,8 +41,12 @@ var last_stage_advance_time: float = 0.0
 var transfer_progress: float = 0.0
 
 # Notepad integration
+var notepad_tabs: Array = []
+var notepad_active_tab: int = 0
 var _pending_notepad_content: String = ""
 var _pending_notepad_filename: String = ""
+var _pending_viewer_content: String = ""
+var _pending_viewer_filename: String = ""
 
 # Signals
 signal stage_advanced(new_stage: int)

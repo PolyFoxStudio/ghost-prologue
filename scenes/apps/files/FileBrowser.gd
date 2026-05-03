@@ -147,11 +147,11 @@ func _on_entry_input(event: InputEvent, entry_name: String) -> void:
 					_show_directory(full_path)
 					_vfs.on_directory_entered(full_path)
 				else:
-					_open_in_notepad(full_path)
+					_view_file(full_path)
 		GameState.record_activity()
 
 
-func _open_in_notepad(path: String) -> void:
+func _view_file(path: String) -> void:
 	var content = _vfs.read_file(path)
 	
 	if content == null or not content is String:
@@ -159,12 +159,12 @@ func _open_in_notepad(path: String) -> void:
 	if content == "PERMISSION_DENIED":
 		return
 	
-	# Store content for Notepad to retrieve
-	GameState.set("_pending_notepad_content", content)
-	GameState.set("_pending_notepad_filename", path.get_file())
+	# Store content for Viewer to retrieve
+	GameState.set("_pending_viewer_content", content)
+	GameState.set("_pending_viewer_filename", path.get_file())
 	
-	# Fire event to open notepad
-	ScriptManager.fire_event("open_notepad:" + path)
+	# Fire event to open viewer
+	ScriptManager.fire_event("open_viewer:" + path)
 
 
 func _refresh() -> void:

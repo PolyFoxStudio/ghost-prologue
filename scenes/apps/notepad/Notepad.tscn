@@ -1,27 +1,44 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5yj8x3wqmr0a"]
+[gd_scene load_steps=2 format=3 uid="uid://notepad_scene_001"]
 
-[ext_resource type="Script" path="res://scenes/apps/notepad/Notepad.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/apps/notepad/Notepad.gd" id="1_notepad"]
 
 [node name="Notepad" type="VBoxContainer"]
-offset_right = 640.0
-offset_bottom = 480.0
-script = ExtResource("1")
+script = ExtResource("1_notepad")
+
+[node name="TabBar" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="TabBarInner" type="HBoxContainer" parent="TabBar"]
+layout_mode = 2
+
+[node name="RenameButton" type="Button" parent="TabBar/TabBarInner"]
+layout_mode = 2
+focus_mode = 0
+text = "Rename"
+
+[node name="DeleteButton" type="Button" parent="TabBar/TabBarInner"]
+layout_mode = 2
+focus_mode = 0
+text = "Delete"
+
+[node name="TabList" type="HBoxContainer" parent="TabBar/TabBarInner"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="AddTabButton" type="Button" parent="TabBar/TabBarInner"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+focus_mode = 0
+text = "+"
 
 [node name="Editor" type="TextEdit" parent="."]
 layout_mode = 2
-size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_colors/background_color = Color(0.05098, 0.05098, 0.05098, 1)
-theme_override_colors/font_color = Color(0.831373, 0.831373, 0.831373, 1)
-theme_override_colors/caret_color = Color(0.831373, 0.831373, 0.831373, 1)
-theme_override_colors/selection_color = Color(0.164706, 0.164706, 0.164706, 1)
-theme_override_constants/line_spacing = 4
-theme_override_font_sizes/font_size = 13
-placeholder_text = ""
+focus_mode = 2
 wrap_mode = 1
 scroll_smooth = true
 context_menu_enabled = false
 shortcut_keys_enabled = true
 selecting_enabled = true
-caret_blink = true
-caret_blink_interval = 0.65
